@@ -10,10 +10,10 @@
 
 ## 0) Informations générales
 
-- **Étudiant·e** : _Nom, Prénom_
-- **Projet** : _Intitulé (dataset × modèle)_
+- **Étudiant·e** : AMDOUNI, Firiel
+- **Projet** : 20 Newsgroups (20 catégories de textes) avec BiGRU et attention moyenne pondérée
 - **Dépôt Git** : _URL publique_
-- **Environnement** : `python == ...`, `torch == ...`, `cuda == ...`  
+- **Environnement** : `python == 3.13.3`, `torch == 2.9.0+cpu`, `cuda == None`  
 - **Commandes utilisées** :
   - Entraînement : `python -m src.train --config configs/config.yaml`
   - LR finder : `python -m src.lr_finder --config configs/config.yaml`
@@ -26,26 +26,141 @@
 
 ### 1.1 Description du dataset
 - **Source** (lien) :
-- **Type d’entrée** (image / texte / audio / séries) :
-- **Tâche** (multiclasses, multi-label, régression) :
-- **Dimensions d’entrée attendues** (`meta["input_shape"]`) :
-- **Nombre de classes** (`meta["num_classes"]`) :
+  - Scikit-learn : https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_20newsgroups.html
+  - Dataset officiel : http://qwone.com/~jason/20Newsgroups/
+
+- **Type d’entrée** (image / texte / audio / séries) : Texte (articles de discussion)
+- **Tâche** (multiclasses, multi-label, régression) : Classification multiclasse (20 catégories)
+- **Dimensions d’entrée attendues** (`meta["input_shape"]`) : `(400,)` 
+  - 400 = longueur maximale des séquences (en nombre de tokens)
+
+- **Nombre de classes** (`meta["num_classes"]`) : 20
+
+- **Format détaillé** :
+  - Chaque exemple = texte brut d'un article (variable length)
+  - Après preprocessing : séquence d'indices d'indices (0-50001)
+  - Après padding/truncation : tenseur de shape `(400,)` contenant des indices entiers
 
 **D1.** Quel dataset utilisez-vous ? D’où provient-il et quel est son format (dimensions, type d’entrée) ?
 
+Le dataset utilisé est le 20 Newsgroups provenant de scikit-learn. Il contient 18 846 articles de discussion issus de 20 catégories de forums (alt.atheism, comp.graphics, sci.med, talk.politics.guns, etc.). Chaque article est un texte brut de longueur variable. Le format des données après preprocessing est : (N, T) = (nombre d'exemples, longueur séquence fixe) = (18846, 400), où chaque position contient un indice de vocabulaire (0–50001). Les tokens spéciaux sont <pad> (index 0) et <unk> (index 1) pour les mots inconnus.
+
+
 ### 1.2 Splits et statistiques
 
-| Split | #Exemples | Particularités (déséquilibre, longueur moyenne, etc.) |
-|------:|----------:|--------------------------------------------------------|
-| Train |           |                                                        |
-| Val   |           |                                                        |
-| Test  |           |                                                        |
+| Split | #Exemples  | Particularités (déséquilibre, longueur moyenne, etc.) |
+|------:|----------: |-------------------------------------------------------|
+| Train | 15 076     |  Distribution équilibrée (3.33% à 5.30% par classe)   |
+| Val   | 1 885      |  Split stratifié, même distribution que train         |
+| Test  | 1 885      |  Split stratifié, même distribution que train         |
 
 **D2.** Donnez la taille de chaque split et le nombre de classes.  
+  Train : 15 076 exemples (80%)
+  Val : 1 885 exemples (10%)
+  Test : 1 885 exemples (10%)
+  Nombre de classes : 20
+  Meta :
+  
+meta = {
+    "num_classes": 20,
+    "input_shape": (400,),
+    "vocab_size": 50002
+}
+
 **D3.** Si vous avez créé un split (ex. validation), expliquez **comment** (stratification, ratio, seed).
 
+Un split stratifié a été effectué en deux étapes :
+
+Étape 1 : Pool total = train original (11 314) + test original (7 532) = 18 846 exemples
+
+Split 80/10/10 stratifié :
+
+Pool train+val : 80% × 18 846 = 15 076 exemples
+Pool test : 10% × 18 846 = 1 885 exemples
+Stratification sur tous les labels pour préserver la distribution des 20 classes
+Étape 2 : Sub-split du pool train+val (90/10 pour train/val) :
+
+Train final : 90% × 15 076 = 15 076 exemples
+Val final : 10% × 15 076 = 1 885 exemples
+Stratification appliquée à nouveau pour conserver l'équilibre des classes
+Seed utilisée : 42 pour garantir la reproductibilité
+Méthode : train_test_split() de scikit-learn avec stratify=all_labels
+
+La stratification préserve les proportions de chaque catégorie dans chaque split, ce qui est crucial pour éviter un biais d'entraînement vers les classes majoritaires et pour fiabiliser l'évaluation.
+
+
 **D4.** Donnez la **distribution des classes** (graphique ou tableau) et commentez en 2–3 lignes l’impact potentiel sur l’entraînement.  
+
+Distribution des classes sur le train set (15 076 exemples) :
+
+| Classe | Catégorie                      | # Exemples | % du train |
+|------:|--------------------------------|------------|-----------|
+| 0     | alt.atheism                    | 639        | 4.24%     |
+| 1     | comp.graphics                  | 779        | 5.17%     |
+| 2     | comp.os.ms-windows.misc        | 788        | 5.23%     |
+| 3     | comp.sys.ibm.pc.hardware       | 786        | 5.21%     |
+| 4     | comp.sys.mac.hardware          | 771        | 5.11%     |
+| 5     | comp.windows.x                 | 790        | 5.24%     |
+| 6     | misc.forsale                   | 780        | 5.17%     |
+| 7     | rec.autos                      | 792        | 5.25%     |
+| 8     | rec.motorcycles                | 796        | 5.28%     |
+| 9     | rec.sport.baseball             | 795        | 5.27%     |
+| 10    | rec.sport.hockey               | 799        | 5.30%     |
+| 11    | sci.crypt                      | 793        | 5.26%     |
+| 12    | sci.electronics                | 788        | 5.23%     |
+| 13    | sci.med                        | 792        | 5.25%     |
+| 14    | sci.space                      | 789        | 5.23%     |
+| 15    | soc.religion.christian         | 797        | 5.29%     |
+| 16    | talk.politics.guns             | 728        | 4.83%     |
+| 17    | talk.politics.mideast          | 752        | 4.99%     |
+| 18    | talk.politics.misc             | 620        | 4.11%     |
+| 19    | talk.religion.misc             | 502        | 3.33%     |
+
+Analyse : La distribution est très équilibrée, variant de 3.33% à 5.30% (ratio majorité/minorité = 1.59:1). Cela signifie que le dataset ne souffre pas d'un déséquilibre drastique. L'impact sur l'entraînement est minimal : le modèle n'aura pas de biais significatif vers les classes majoritaires, et la métrique d'accuracy seule est suffisante pour évaluer la performance globale. Aucune pondération de classe ou sursampling n'est nécessaire.
+
 **D5.** Mentionnez toute particularité détectée (tailles variées, longueurs variables, multi-labels, etc.).
+Le dataset 20 Newsgroups présente les caractéristiques suivantes après analyse complète :
+
+Longueurs de texte (en tokens) :
+
+Minimum : 18 tokens
+Moyenne : 214.8 tokens
+Médiane : 189.0 tokens
+Maximum (observé) : 400 tokens
+Justification de max_seq_len=400 : Couvre 100% des textes (aucune perte par truncation)
+Distribution des longueurs :
+
+~25% des textes < 145 tokens (beaucoup de padding)
+~50% des textes < 189 tokens (médiane)
+~75% des textes < 255 tokens
+~100% des textes ≤ 400 tokens (aucun truncation)
+Implication computationnelle : ~40% des positions seront du padding (tokens index 0), ce qui est normal et géré par le modèle (embedding layer ignore les positions padées via attention masking dans le BiGRU)
+Vocabulaire :
+
+Taille : 50 002 tokens
+Tokens spéciaux : <pad> (index 0), <unk> (index 1)
+Mots rares éliminés : min_freq=2 (mots apparaissant ≥2 fois conservés)
+Mots hors vocabulaire → mappés à <unk> (index 1)
+Impact : Vocabulaire compact (~50k vs. potentiellement 200k+), réduit le bruit lexical et améliore la généralisation
+Format après preprocessing :
+
+Chaque texte = liste d'indices (0 à 50 001)
+Shape d'une séquence : (400,) → tenseur torch.long
+Shape d'un batch (train) : (64, 400) (64 séquences de 400 tokens)
+Labels : indices 0–19 (classe de l'article)
+Classification simple (pas de multi-label) :
+
+Chaque article appartient à exactement 1 catégorie (mutually exclusive)
+Pas d'étiquettes manquantes ou ambiguës
+Loss function appropriée : CrossEntropyLoss
+
+Cohérence check :
+
+ Min/max indices observés [0, 49 939] → dans range attendu [0, 50 001]
+ Distribution classes équilibrée sur train/val/test (stratification respectée)
+ Aucune séquence avec NaN ou valeur aberrante
+ Batch shape (64, 400) cohérent avec meta["input_shape"]=(400,)
+ Labels valides [0-19] cohérents avec meta["num_classes"]=20
 
 ### 1.3 Prétraitements (preprocessing) — _appliqués à train/val/test_
 
