@@ -1,0 +1,84 @@
+# Fichier de configuration générique (à adapter au projet)
+dataset:
+  name: "20newsgroups"               # ex: "CIFAR10", "IMDB", ...
+  root: "./data"            # chemin local pour les données
+  split:                    # optionnel : noms/tailles de splits
+    train: 0.8
+    val: 0.1
+    test: 0.1
+  download: true            # si supporté
+  num_workers: 4
+  shuffle: true
+
+preprocess:
+  # transformations de base (ex: resize, normalize)
+  resize: null               # ex: [32, 32] ou null
+  normalize: null          # ex: {"mean": [0.5,0.5,0.5], "std":[0.5,0.5,0.5]} ou null
+  text_tokenizer: "basic"          # pour NLP : nom ou paramètres, sinon null
+  max_seq_len: 400                  # Longueur fixe après padding/truncation (HYPERPARAMÈTRE 2)
+  min_freq: 2                       # Fréquence minimale pour inclure un mot au vocabulaire
+  max_vocab_size: 50000             # Taille maximale du vocabulaire
+
+
+augment:
+  # data augmentation (laisser null si non utilisée)
+  random_flip: null             # true/false
+  random_crop: null             # paramètres ou null
+  color_jitter:  null           # paramètres ou null
+  spec_augment: null            # pour audio : paramètres ou null
+
+model:
+  type: "bigru_attention"                # ex: "resnet18", "mlp", "lstm", ...
+  num_classes: 20
+  input_shape: [400]             # ex: [3, 32, 32] ou null
+  hidden_sizes: null            # ex: [256, 128] ou null
+  activation: tanh          # ex: relu, gelu, tanh...
+  dropout: 0.1              # ex: 0.0–0.5
+  batch_norm: false         # true/false
+  residual: false           # true/false
+  attention: true          # true/false
+  rnn:                      # pour RNN/LSTM/GRU : paramètres ou null
+    type: "gru"              # lstm/gru
+    hidden_size: 192
+    num_layers: 1
+    bidirectional: true
+    embedding_dim: 200                 # Dimension de l'embedding (spécifié projet 16)
+    vocab_size: null                   # Déterminé auto à partir du dataset
+    padding_idx: 0                     # Index du token <pad>
+
+train:
+  seed: 42
+  device: auto              # "cpu", "cuda", ou "auto"
+  batch_size: 64
+  epochs: 15
+  max_steps: null           # entier ou null
+  overfit_small: false      # true pour sur-apprendre sur un petit échantillon
+
+  optimizer:
+    name: adam              # sgd/adam/rmsprop
+    lr: 0.001
+    weight_decay: 1e-5 
+    momentum: 0.9           # utile si SGD
+
+  scheduler:
+    name: none              # none/step/cosine/onecycle
+    step_size: 10
+    gamma: 0.1
+    warmup_steps: 0
+
+metrics:
+  classification: 
+      - "accuracy"                     # Accuracy globale
+      - "f1" 
+  regression: []
+
+hparams:                    # espace pour mini grid search
+  lr: [0.0005, 0.001, 0.005]
+  batch_size: [32, 64]
+  weight_decay: [0.0, 1e-5] 
+  rnn_hidden_size: [128, 192, 256]  # HYPERPARAMÈTRE 1 : taille cachée GRU
+  max_seq_len: [256, 400, 512]  # HYPERPARAMÈTRE 2 : longueur max séquence
+
+paths:
+  runs_dir: "./runs"
+  artifacts_dir: "./artifacts"
