@@ -56,8 +56,8 @@ train:
 
   optimizer:
     name: adam              # sgd/adam/rmsprop
-    lr: 0.001
-    weight_decay: 1e-5 
+    lr: 0.002
+    weight_decay: 0.0
     momentum: 0.9           # utile si SGD
 
   scheduler:
