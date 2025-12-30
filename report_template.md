@@ -118,6 +118,7 @@ Les prétraitements sont strictement identiques pour les trois ensembles (train,
 **D8.** Quelles **augmentations** avez-vous appliquées (paramètres précis) et **pourquoi** ?  
 
 Aucune augmentation au niveau des données n'est appliquée pour ce projet. Cette décision repose sur trois justifications principales. Premièrement, le dataset d'entraînement contient 15 076 exemples avec une distribution équilibrée (ratio majorité/minorité = 1.59:1), ce qui est largement suffisant pour entraîner un modèle BiGRU sans risque majeur d'overfitting nécessitant une augmentation artificielle des données. Deuxièmement, les augmentations NLP classiques (synonym replacement, paraphrasing, back-translation) comportent un risque inhérent de modification sémantique qui peut violer le principe label-preserving, ce qui est inacceptable pour un dataset académique où la qualité des labels est cruciale. Par exemple, transformer "This policy is not conservative" en "This policy is never conservative" change subtilement la nuance sémantique et pourrait affecter la catégorie d'appartenance. Troisièmement, la régularisation est assurée efficacement par des mécanismes alternatifs : dropout sur embeddings (p=0.1) après la couche nn.Embedding qui simule un word dropout implicite, dropout BiGRU (p=0.1) entre couches récurrentes via le paramètre dropout de nn.GRU, et weight decay (1e-4 ou 1e-5) appliqué via l'optimiseur AdamW pour pénaliser les poids extrêmes. Cette approche sans augmentation de données est conforme aux benchmarks de référence sur 20 Newsgroups et constitue un standard en classification de texte académique.
+
 ---
 
 **D9.** Les augmentations **conservent-elles les labels** ? Justifiez pour chaque transformation retenue.
@@ -171,6 +172,7 @@ Vérification de cohérence :
 ![alt text](images/D11.png)
 
 La forme du batch train (64, 400) correspond exactement à (batch_size, seq_len) où seq_len = meta["input_shape"][0] = 400. Les indices de vocabulaire observés (max = 49979) sont strictement inférieurs à vocab_size = 50002, confirmant l'absence d'indices hors vocabulaire. Les labels observés couvrent plusieurs classes distinctes dans un batch shufflé, cohérent avec un dataset équilibré. La cohérence est totale, validant l'implémentation du pipeline de données.
+
 ---
 
 ## 2) Modèle
@@ -295,6 +297,7 @@ Vérifications : indices valides [0, 49862] < vocab_size 50002 ✓, labels [0, 1
 ![alt text](images/M33.png)
 
 L'overfit test a été réalisé sur 32 exemples (subset du train set) avec les hyperparamètres de référence (hidden_size=192, embedding_dim=200, num_layers=1) et un learning rate élevé (0.01) sans régularisation (weight decay=0, dropout désactivé). Le modèle converge parfaitement après 50 époques : loss initiale 2.9987 → loss finale 0.000010, accuracy 0% → 100%. La courbe TensorBoard (runs/overfit_small/) montre une descente monotone confirmant la capacité du modèle à mémoriser intégralement le petit échantillon. Ce résultat prouve que l'architecture BiGRU+Attention possède une capacité représentationnelle suffisante pour apprendre des patterns complexes, validant l'implémentation (backward correct, gradients non nuls, convergence stable). L'overfit intentionnel sur 32 exemples constitue un sanity-check crucial avant l'entraînement sur le dataset complet (15k exemples) avec régularisation.
+
 ---
 
 ## 4) LR finder
@@ -372,6 +375,7 @@ Le mini grid search a exploré 24 combinaisons sur 3 époques (seed=42, batch_si
 Effet hidden_size (128 vs 192) : Le passage à hidden_size=192 améliore systématiquement la val_accuracy de +0.5 à +1.5 points (ex: 86.37% → 87.21%) et accélère la convergence dès l'époque 1 (77.45% vs 75.76%). Les courbes train_loss descendent plus rapidement (0.29 vs 0.35 à l'époque 3), confirmant une capacité d'apprentissage supérieure. L'écart train/val reste stable (5-7 points) indépendamment de hidden_size, prouvant que le dropout FC (0.5) contrebalance l'augmentation de paramètres (+118%).
 
 Effet embedding_dim (150 vs 200) : La réduction à embedding_dim=150 entraîne une perte modérée de -0.3 à -0.5 points (87.21% → 86.90%), suggérant que 150 dimensions capturent déjà l'essentiel de l'information discriminante. Les courbes de convergence montrent une stabilité quasi-identique (oscillations val_loss similaires, vitesse d'apprentissage comparable). L'impact sur l'overfitting est négligeable (écart train/val identique), justifiant le choix embedding_dim=200 pour maximiser les performances (+0.3-0.5%) malgré un surcoût paramètres de +25%.
+
 ---
 
 ## 6) Entraînement complet (10–20 époques, sans scheduler)
@@ -399,10 +403,8 @@ val/accuracy :
 
 **M6.** Montrez les **courbes train/val** (loss + métrique). Interprétez : sous-apprentissage / sur-apprentissage / stabilité d’entraînement.
 
-**M6.** Montrez les **courbes train/val** (loss + métrique). Interprétez : sous-apprentissage / sur-apprentissage / stabilité d'entraînement.
-
 L'entraînement complet sur 15 époques avec la configuration optimale (LR=0.002, hidden_size=192, embedding_dim=200) atteint une val_accuracy finale de **90.45%** (époque 15) avec convergence stable. Les courbes révèlent trois phases distinctes : (1) **apprentissage rapide** (époques 1-4) où train/loss chute de 1.75 à 0.29 et val/accuracy bondit de 77% à 88%, (2) **optimisation** (époques 5-8) où val/accuracy atteint son pic à 90.08% (époque 8) avec val/loss minimal à 0.44, (3) **overfitting progressif** (époques 9-15) où train/loss continue de descendre jusqu'à 0.0181 tandis que val/loss remonte à 0.5247 et val/accuracy stagne entre 89.44% et 90.45%. L'écart final train/val de 0.50 unités en loss indique un **overfitting modéré** malgré les mécanismes de régularisation (dropout 0.1/0.5). La courbe val/accuracy montre un plateau stable après l'époque 8 avec des oscillations <1%, suggérant que l'arrêt à l'époque 8-10 aurait été optimal (early stopping). Néanmoins, l'absence de divergence ou d'instabilité confirme la robustesse de l'architecture BiGRU+Attention et la pertinence du learning rate conservateur (0.002). Les 15 époques permettent d'atteindre 90.45% (×17 mieux que la baseline 5.30%), validant le choix des hyperparamètres finaux.
----
+
 
 ---
 
@@ -585,7 +587,9 @@ train:
   weight_decay: 0.0
   max_epochs: 15
 
+
 - **Commandes exactes** :
+
 # LR Finder (optionnel, exploration initiale)
 python -m src.lr_finder --config configs/config.yaml
 
