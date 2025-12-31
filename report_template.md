@@ -313,7 +313,7 @@ Formes du batch et de sortie :
 inputs.shape = torch.Size([64, 400]) (batch_size, seq_len), dtype = torch.long
 labels.shape = torch.Size([64]), dtype = torch.long
 logits.shape = torch.Size([64, 20]) (batch_size, num_classes), dtype = torch.float32
-Vérifications : indices valides [0, 49862] < vocab_size 50002 ✓, labels [0, 19] < num_classes 20 ✓, 13 modules avec gradients non nuls ✓.
+Vérifications : indices valides [0, 49862] < vocab_size 50002 , labels [0, 19] < num_classes 20 , 13 modules avec gradients non nuls .
 
 ---
 
@@ -428,14 +428,19 @@ Effet embedding_dim (150 vs 200) : La réduction à embedding_dim=150 entraîne 
 
 > _Insérer captures TensorBoard :_
 > - `train/loss`, `val/loss`
-train/loss : 
+
+train/loss :
+
 ![alt text](images/M6.png)
 
 val/loss : 
+
 ![alt text](images/M66.png)
 
 > - `val/accuracy` **ou** `val/f1` (classification)
+
 val/accuracy : 
+
 ![alt text](images/M666.png)
 
 **M6.** Montrez les **courbes train/val** (loss + métrique). Interprétez : sous-apprentissage / sur-apprentissage / stabilité d’entraînement.
