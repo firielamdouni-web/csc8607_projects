@@ -189,9 +189,13 @@ Les trois exemples confirment le fonctionnement correct du pipeline de preproces
 Forme d'un batch train :
 
 inputs.shape  = torch.Size([64, 400])
+
 labels.shape  = torch.Size([64])
+
 inputs.dtype  = torch.long
+
 labels.dtype  = torch.long
+
 indices range = [0, 49862]
 
 Vérification de cohérence :
