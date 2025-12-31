@@ -311,8 +311,11 @@ Formes du batch et de sortie :
 | Logits (sortie modèle) | (64, 20) | torch.float32 | Scores bruts (non normalisés) pour chaque classe |
 
 inputs.shape = torch.Size([64, 400]) (batch_size, seq_len), dtype = torch.long
+
 labels.shape = torch.Size([64]), dtype = torch.long
+
 logits.shape = torch.Size([64, 20]) (batch_size, num_classes), dtype = torch.float32
+
 Vérifications : indices valides [0, 49862] < vocab_size 50002 , labels [0, 19] < num_classes 20 , 13 modules avec gradients non nuls .
 
 ---
