@@ -470,7 +470,9 @@ lr=0.002_wd=0.0_h=192_e=200
 ![alt text](images/M777.png)
 
 2 runs cochés :
+
 lr=0.002_wd=0.0_h=192_e=200 
+
 lr=0.002_wd=1e-05_h=192_e=200
 
 - **Variation des 2 hyperparamètres de modèle** (convergence, plateau, surcapacité)
@@ -478,9 +480,13 @@ lr=0.002_wd=1e-05_h=192_e=200
 val/accuracy : 
 ![alt text](images/M7777.png)
 les 4 runs :
+
 lr=0.002_wd=0.0_h=128_e=150
+
 lr=0.002_wd=0.0_h=128_e=200
+
 lr=0.002_wd=0.0_h=192_e=150
+
 lr=0.002_wd=0.0_h=192_e=200
 
 **M7.** Trois **comparaisons** commentées (une phrase chacune) : LR, weight decay, hyperparamètres modèle — ce que vous attendiez vs. ce que vous observez.
