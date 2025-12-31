@@ -67,7 +67,28 @@ Un split stratifié a été effectué en deux étapes pour garantir la préserva
 
 Distribution des classes sur le train set (15 076 exemples) :
 
-![alt text](images/D4.png)
+| Classe | Catégorie | #Exemples | % du train |
+|--------|-----------|-----------|------------|
+| 0 | alt.atheism | 639 | 4.24% |
+| 1 | comp.graphics | 779 | 5.17% |
+| 2 | comp.os.ms-windows.misc | 788 | 5.23% |
+| 3 | comp.sys.ibm.pc.hardware | 786 | 5.21% |
+| 4 | comp.sys.mac.hardware | 771 | 5.11% |
+| 5 | comp.windows.x | 790 | 5.24% |
+| 6 | misc.forsale | 780 | 5.17% |
+| 7 | rec.autos | 792 | 5.25% |
+| 8 | rec.motorcycles | 796 | 5.28% |
+| 9 | rec.sport.baseball | 795 | 5.27% |
+| 10 | rec.sport.hockey | 799 | 5.30% |
+| 11 | sci.crypt | 793 | 5.26% |
+| 12 | sci.electronics | 788 | 5.23% |
+| 13 | sci.med | 792 | 5.25% |
+| 14 | sci.space | 789 | 5.23% |
+| 15 | soc.religion.christian | 797 | 5.29% |
+| 16 | talk.politics.guns | 728 | 4.83% |
+| 17 | talk.politics.mideast | 752 | 4.99% |
+| 18 | talk.politics.misc | 620 | 4.11% |
+| 19 | talk.religion.misc | 502 | 3.33% |
 
 La distribution des classes sur l'ensemble d'entraînement est remarquablement équilibrée, avec des proportions variant entre 3.33% (classe minoritaire talk.religion.misc) et 5.30% (classe majoritaire rec.sport.hockey), soit un ratio majorité/minorité de 1.59:1. Ce faible déséquilibre implique que le modèle n'aura pas tendance à développer un biais significatif en faveur des classes majoritaires, et que la métrique d'accuracy globale sera suffisante pour évaluer les performances sans nécessiter de techniques de rééquilibrage telles que la pondération des classes, le sursampling ou le sous-échantillonnage. L'impact sur l'entraînement sera donc minimal, permettant une convergence naturelle vers des performances équilibrées sur l'ensemble des catégories.
 
@@ -103,7 +124,13 @@ Conversion en tenseur : Les séquences d'indices sont converties en tenseurs PyT
 
 Les prétraitements sont strictement identiques pour les trois ensembles (train, validation, test). Aucune opération stochastique ou transformation spécifique à un split n'est appliquée. Le pipeline (tokenization → encoding → padding → conversion tenseur) est entièrement déterministe et appliqué de manière uniforme à tous les exemples. Le point critique validé est que le vocabulaire word2idx est construit une seule fois sur le train set (15 076 exemples), puis gelé et réutilisé tel quel pour encoder les ensembles de validation (1 885 exemples) et test (1 885 exemples). Cette approche garantit l'absence de fuite d'information et simule fidèlement les conditions réelles d'inférence où le modèle rencontrera nécessairement des mots jamais vus en entraînement. Les mots nouveaux dans validation et test sont systématiquement mappés vers le token <unk> (index 1). Aucune augmentation de données n'est appliquée en validation ou test, contrairement au train où la régularisation est assurée par dropout. L'identité stricte des prétraitements entre les trois ensembles est cruciale pour la validité de l'évaluation, la comparabilité des métriques, et la conformité aux bonnes pratiques méthodologiques en apprentissage automatique.
 
-![alt text](images/D7.png)
+| Étape | Train | Val | Test | Identique ? |
+|-------|-------|-----|------|-------------|
+| Tokenization | Lowercase + ponctuation + split | Idem | Idem | Oui |
+| Vocabulaire | Construit sur train | Réutilisé (fixe) | Réutilisé (fixe) | Oui |
+| Encoding | Via word2idx | Via même word2idx | Via même word2idx | Oui |
+| Padding/Truncation | max_seq_len=400 | Idem | Idem | Oui |
+| Conversion tenseur | torch.long | Idem | Idem | Oui |
 
 ### 1.4 Augmentation de données — _train uniquement_
 
@@ -155,7 +182,7 @@ Après exécution du script de vérification (`python test_data_loading.py`), vo
 **Indices range** : [8, 41203]  
 **Texte (aperçu décodé)** : the recent debate about government policy has raised important questions regarding civil liberties and national security the administration claims these measures are necessary but critics argue they infringe on constitutional rights the opposition party has called for investigations into potential abuses of power...
  
-Les trois exemples confirment le fonctionnement correct du pipeline de preprocessing. Les séquences sont correctement tokenisées, encodées en indices numériques (range observé [0, 49979] < vocab_size=50002), et padées uniformément à 400 tokens. La présence de tokens inconnus (`<unk>`) reste minime car le vocabulaire de 50 000 mots couvre efficacement le corpus. Le padding à droite (positions finales) varie entre 41% et 61% selon la longueur originale du texte, cohérent avec la médiane observée de 189 tokens. Les labels (10, 6, 18) correspondent à des catégories thématiquement distinctes du dataset 20 Newsgroups (sport, vente, politique), confirmant l'absence de corruption des données. Le preprocessing transforme efficacement les articles bruts en séquences numériques exploitables par le BiGRU tout en préservant l'information sémantique nécessaire à la classification multiclasse.
+Les trois exemples confirment le fonctionnement correct du pipeline de preprocessing. Les séquences sont correctement tokenisées, encodées en indices numériques (range observé [0, 49862] < vocab_size=50002), et padées uniformément à 400 tokens. La présence de tokens inconnus (`<unk>`) reste minime car le vocabulaire de 50 000 mots couvre efficacement le corpus. Le padding à droite (positions finales) varie entre 41% et 61% selon la longueur originale du texte, cohérent avec la médiane observée de 189 tokens. Les labels (10, 6, 18) correspondent à des catégories thématiquement distinctes du dataset 20 Newsgroups (sport, vente, politique), confirmant l'absence de corruption des données. Le preprocessing transforme efficacement les articles bruts en séquences numériques exploitables par le BiGRU tout en préservant l'information sémantique nécessaire à la classification multiclasse.
 
 **D11.** Donnez la **forme exacte** d’un batch train (ex. `(batch, C, H, W)` ou `(batch, seq_len)`), et vérifiez la cohérence avec `meta["input_shape"]`.
 
@@ -165,13 +192,19 @@ inputs.shape  = torch.Size([64, 400])
 labels.shape  = torch.Size([64])
 inputs.dtype  = torch.long
 labels.dtype  = torch.long
-indices range = [0, 49979]
+indices range = [0, 49862]
 
 Vérification de cohérence :
 
-![alt text](images/D11.png)
+| Paramètre | Valeur observée | Valeur attendue (meta) | Cohérent ? |
+|-----------|-----------------|------------------------|------------|
+| Batch size | 64 | config["training"]["batch_size"] = 64 | Oui |
+| Longueur séquence | 400 | meta["input_shape"][0] = 400 | Oui |
+| Type tenseur | torch.long | torch.long (requis par nn.Embedding) | Oui |
+| Range indices | [0, 49862] | [0, vocab_size-1] = [0, 50001] | Oui |
+| Range labels | [0, 19] | [0, num_classes-1] = [0, 19] | Oui |
 
-La forme du batch train (64, 400) correspond exactement à (batch_size, seq_len) où seq_len = meta["input_shape"][0] = 400. Les indices de vocabulaire observés (max = 49979) sont strictement inférieurs à vocab_size = 50002, confirmant l'absence d'indices hors vocabulaire. Les labels observés couvrent plusieurs classes distinctes dans un batch shufflé, cohérent avec un dataset équilibré. La cohérence est totale, validant l'implémentation du pipeline de données.
+La forme du batch train (64, 400) correspond exactement à (batch_size, seq_len) où seq_len = meta["input_shape"][0] = 400. Les indices de vocabulaire observés (max = 49862) sont strictement inférieurs à vocab_size = 50002, confirmant l'absence d'indices hors vocabulaire. Les labels observés couvrent plusieurs classes distinctes dans un batch shufflé, cohérent avec un dataset équilibré. La cohérence est totale, validant l'implémentation du pipeline de données.
 
 ---
 
@@ -260,10 +293,10 @@ Stratégie d'exploration : Grid search sur {hidden_size: 128, 192, 256} × {embe
 Écart absolu : 0.0056
 Écart relatif : 0.19%
 - **Vérification** : backward OK, gradients ≠ 0
-Gradients calculés : ✓ Oui (13 modules avec paramètres apprenables)
+Gradients calculés :  Oui (13 modules avec paramètres apprenables)
 Norme totale des gradients : 0.6482
 Norme moyenne : 0.0499
-Gradients non nuls : ✓ Confirmé (backward fonctionne correctement)
+Gradients non nuls :  Confirmé (backward fonctionne correctement)
 
 **M2.** Donnez la **loss initiale** observée et dites si elle est cohérente. Indiquez la forme du batch et la forme de sortie du modèle.
 
@@ -271,7 +304,11 @@ La loss initiale observée (3.0014 sur un batch de 64 exemples) est parfaitement
 
 Formes du batch et de sortie :
 
-![alt text](images/M2.png)
+| Élément | Shape | dtype | Description |
+|---------|-------|-------|-------------|
+| Inputs (batch train) | (64, 400) | torch.int64 | Séquences de 400 indices de vocabulaire (range [0, 49862]) |
+| Labels (batch train) | (64,) | torch.int64 | Indices de classe (range [0, 19]) |
+| Logits (sortie modèle) | (64, 20) | torch.float32 | Scores bruts (non normalisés) pour chaque classe |
 
 inputs.shape = torch.Size([64, 400]) (batch_size, seq_len), dtype = torch.long
 labels.shape = torch.Size([64]), dtype = torch.long
