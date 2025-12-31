@@ -94,7 +94,7 @@ La distribution des classes sur l'ensemble d'entraînement est remarquablement �
 
 **D5.** Mentionnez toute particularité détectée (tailles variées, longueurs variables, multi-labels, etc.).
 
-Le dataset présente plusieurs particularités importantes pour la modélisation. Concernant les longueurs de texte, on observe une forte variabilité allant de 18 tokens (minimum) à 400 tokens (maximum après truncation), avec une longueur moyenne de 214.8 tokens et une médiane de 189.0 tokens. Cette distribution implique que le choix de max_seq_len=400 permet de couvrir intégralement le corpus sans perte d'information par truncation, tout en entraînant environ 40% de padding en moyenne. Le vocabulaire extrait contient 50 002 tokens au total, composé de 50 000 mots conservés (fréquence minimale de 2 occurrences) et de 2 tokens spéciaux (<pad> et <unk>). Cette taille de vocabulaire représente un compromis entre couverture lexicale et efficacité mémoire, éliminant les mots hapax qui constituent généralement du bruit sans valeur discriminante. Il s'agit d'un problème de classification simple où chaque article appartient à une seule catégorie, excluant toute ambiguïté de multi-label. Aucune valeur manquante ou aberrante n'a été détectée dans le dataset, et la vérification des indices de vocabulaire ([0, 49862] observé dans les batches) confirme l'absence d'erreurs d'encodage.
+Le dataset présente plusieurs particularités importantes pour la modélisation. Concernant les longueurs de texte, on observe une forte variabilité allant de 18 tokens (minimum) à 400 tokens (maximum après truncation), avec une longueur moyenne de 214.8 tokens et une médiane de 189.0 tokens. Cette distribution implique que le choix de max_seq_len=400 permet de couvrir intégralement le corpus sans perte d'information par truncation, tout en entraînant environ 40% de padding en moyenne. Le vocabulaire extrait contient 50 002 tokens au total, composé de 50 000 mots conservés (fréquence minimale de 2 occurrences) et de 2 tokens spéciaux (<pad> et <unk>). Cette taille de vocabulaire représente un compromis entre couverture lexicale et efficacité mémoire, éliminant les mots hapax qui constituent généralement du bruit sans valeur discriminante. Il s'agit d'un problème de classification simple où chaque article appartient à une seule catégorie, excluant toute ambiguïté de multi-label. Aucune valeur manquante ou aberrante n'a été détectée dans le dataset, et la vérification des indices de vocabulaire ([0, 49917] observé dans les batches) confirme l'absence d'erreurs d'encodage.
 
 ### 1.3 Prétraitements (preprocessing) — _appliqués à train/val/test_
 
@@ -182,7 +182,7 @@ Après exécution du script de vérification (`python test_data_loading.py`), vo
 **Indices range** : [8, 41203]  
 **Texte (aperçu décodé)** : the recent debate about government policy has raised important questions regarding civil liberties and national security the administration claims these measures are necessary but critics argue they infringe on constitutional rights the opposition party has called for investigations into potential abuses of power...
  
-Les trois exemples confirment le fonctionnement correct du pipeline de preprocessing. Les séquences sont correctement tokenisées, encodées en indices numériques (range observé [0, 49862] < vocab_size=50002), et padées uniformément à 400 tokens. La présence de tokens inconnus (`<unk>`) reste minime car le vocabulaire de 50 000 mots couvre efficacement le corpus. Le padding à droite (positions finales) varie entre 41% et 61% selon la longueur originale du texte, cohérent avec la médiane observée de 189 tokens. Les labels (10, 6, 18) correspondent à des catégories thématiquement distinctes du dataset 20 Newsgroups (sport, vente, politique), confirmant l'absence de corruption des données. Le preprocessing transforme efficacement les articles bruts en séquences numériques exploitables par le BiGRU tout en préservant l'information sémantique nécessaire à la classification multiclasse.
+Les trois exemples confirment le fonctionnement correct du pipeline de preprocessing. Les séquences sont correctement tokenisées, encodées en indices numériques (range observé [0, 49917] < vocab_size=50002), et padées uniformément à 400 tokens. La présence de tokens inconnus (`<unk>`) reste minime car le vocabulaire de 50 000 mots couvre efficacement le corpus. Le padding à droite (positions finales) varie entre 41% et 61% selon la longueur originale du texte, cohérent avec la médiane observée de 189 tokens. Les labels (10, 6, 18) correspondent à des catégories thématiquement distinctes du dataset 20 Newsgroups (sport, vente, politique), confirmant l'absence de corruption des données. Le preprocessing transforme efficacement les articles bruts en séquences numériques exploitables par le BiGRU tout en préservant l'information sémantique nécessaire à la classification multiclasse.
 
 **D11.** Donnez la **forme exacte** d’un batch train (ex. `(batch, C, H, W)` ou `(batch, seq_len)`), et vérifiez la cohérence avec `meta["input_shape"]`.
 
@@ -196,7 +196,7 @@ inputs.dtype  = torch.long
 
 labels.dtype  = torch.long
 
-indices range = [0, 49862]
+indices range = [0, 49917]
 
 Vérification de cohérence :
 
@@ -205,10 +205,10 @@ Vérification de cohérence :
 | Batch size | 64 | config["training"]["batch_size"] = 64 | Oui |
 | Longueur séquence | 400 | meta["input_shape"][0] = 400 | Oui |
 | Type tenseur | torch.long | torch.long (requis par nn.Embedding) | Oui |
-| Range indices | [0, 49862] | [0, vocab_size-1] = [0, 50001] | Oui |
+| Range indices | [0, 49917] | [0, vocab_size-1] = [0, 50001] | Oui |
 | Range labels | [0, 19] | [0, num_classes-1] = [0, 19] | Oui |
 
-La forme du batch train (64, 400) correspond exactement à (batch_size, seq_len) où seq_len = meta["input_shape"][0] = 400. Les indices de vocabulaire observés (max = 49862) sont strictement inférieurs à vocab_size = 50002, confirmant l'absence d'indices hors vocabulaire. Les labels observés couvrent plusieurs classes distinctes dans un batch shufflé, cohérent avec un dataset équilibré. La cohérence est totale, validant l'implémentation du pipeline de données.
+La forme du batch train (64, 400) correspond exactement à (batch_size, seq_len) où seq_len = meta["input_shape"][0] = 400. Les indices de vocabulaire observés (max = 49917) sont strictement inférieurs à vocab_size = 50002, confirmant l'absence d'indices hors vocabulaire. Les labels observés couvrent plusieurs classes distinctes dans un batch shufflé, cohérent avec un dataset équilibré. La cohérence est totale, validant l'implémentation du pipeline de données.
 
 ---
 
@@ -308,11 +308,12 @@ La loss initiale observée (3.0014 sur un batch de 64 exemples) est parfaitement
 
 Formes du batch et de sortie :
 
-| Élément | Shape | dtype | Description |
-|---------|-------|-------|-------------|
-| Inputs (batch train) | (64, 400) | torch.int64 | Séquences de 400 indices de vocabulaire (range [0, 49862]) |
-| Labels (batch train) | (64,) | torch.int64 | Indices de classe (range [0, 19]) |
-| Logits (sortie modèle) | (64, 20) | torch.float32 | Scores bruts (non normalisés) pour chaque classe |
+| Élément | Forme | Type |
+|---------|-------|------|
+| Batch inputs | (64, 400) | torch.long |
+| Batch labels | (64,) | torch.long |
+| Sortie modèle (logits) | (64, 20) | torch.float32 |
+
 
 inputs.shape = torch.Size([64, 400]) (batch_size, seq_len), dtype = torch.long
 
@@ -320,7 +321,9 @@ labels.shape = torch.Size([64]), dtype = torch.long
 
 logits.shape = torch.Size([64, 20]) (batch_size, num_classes), dtype = torch.float32
 
-Vérifications : indices valides [0, 49862] < vocab_size 50002 , labels [0, 19] < num_classes 20 , 13 modules avec gradients non nuls .
+Vérifications : indices valides [0, 49917] < vocab_size 50002 , labels [0, 19] < num_classes 20 , 13 modules avec gradients non nuls .
+
+**Conclusion** : La loss initiale (3.0014) est **cohérente** avec la valeur théorique -log(1/20) ≈ 2.9957 (écart +0.19%). Les formes sont correctes et les gradients non nuls confirment l'implémentation.
 
 ---
 
@@ -466,14 +469,20 @@ train/loss :
 ![alt text](images/M7.png)
 
 3 runs cochés :
+
 lr=0.0005_wd=0.0_h=192_e=200
+
 lr=0.001_wd=0.0_h=192_e=200
+
 lr=0.002_wd=0.0_h=192_e=200
 
 - **Variation du weight decay** (écart train/val, régularisation)
  train/loss :
+
 ![alt text](images/M77.png)
+
  val/loss : 
+
 ![alt text](images/M777.png)
 
 2 runs cochés :
@@ -485,7 +494,9 @@ lr=0.002_wd=1e-05_h=192_e=200
 - **Variation des 2 hyperparamètres de modèle** (convergence, plateau, surcapacité)
 
 val/accuracy : 
+
 ![alt text](images/M7777.png)
+
 les 4 runs :
 
 lr=0.002_wd=0.0_h=128_e=150
@@ -509,6 +520,8 @@ Observé : Les courbes train/loss et val/loss sont quasi-superposées entre wd=0
 **Comparaison 3 — Variation des hyperparamètres embedding_dim** (e=150 vs e=200, capture val/accuracy avec lr=0.002, h=192) :
 Attendu : embedding_dim=200 devrait améliorer légèrement la val_accuracy grâce à une représentation lexicale plus riche sans overfitting. 
 Observé : La courbe e=200 (rose) atteint une val_accuracy finale légèrement supérieure (~84.5%) à e=150 (cyan, ~84.0%), avec un gain modeste de +0.5 point confirmant l'impact positif mais limité de l'augmentation de dimension d'embedding (+25% paramètres), validant le choix e=200 comme compromis optimal entre expressivité sémantique et efficacité paramétrique pour ce vocabulaire de 50k tokens.
+
+**Synthèse**: Le LR=0.002 s'impose comme optimal (convergence rapide sans instabilité), le weight_decay=0.0 suffit (dropout efficace), et hidden_size=192 + embedding_dim=200 offrent le meilleur compromis performance/complexité.
 
 ---
 
