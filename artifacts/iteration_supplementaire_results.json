@@ -1,0 +1,44 @@
+[
+  {
+    "run_name": "lr=0.002_layers=2_h=192_e=200",
+    "lr": 0.002,
+    "num_layers": 2,
+    "best_val_acc": 0.903448275862069,
+    "final_val_loss": 0.4470142791668574
+  },
+  {
+    "run_name": "lr=0.0025_layers=2_h=192_e=200",
+    "lr": 0.0025,
+    "num_layers": 2,
+    "best_val_acc": 0.9002652519893899,
+    "final_val_loss": 0.44306117047866184
+  },
+  {
+    "run_name": "lr=0.0025_layers=1_h=192_e=200",
+    "lr": 0.0025,
+    "num_layers": 1,
+    "best_val_acc": 0.8992042440318302,
+    "final_val_loss": 0.416123229265213
+  },
+  {
+    "run_name": "lr=0.002_layers=1_h=192_e=200",
+    "lr": 0.002,
+    "num_layers": 1,
+    "best_val_acc": 0.8986737400530505,
+    "final_val_loss": 0.4301483978827794
+  },
+  {
+    "run_name": "lr=0.0015_layers=1_h=192_e=200",
+    "lr": 0.0015,
+    "num_layers": 1,
+    "best_val_acc": 0.8875331564986737,
+    "final_val_loss": 0.42913551976283393
+  },
+  {
+    "run_name": "lr=0.0015_layers=2_h=192_e=200",
+    "lr": 0.0015,
+    "num_layers": 2,
+    "best_val_acc": 0.8822281167108753,
+    "final_val_loss": 0.47390267755836246
+  }
+]
