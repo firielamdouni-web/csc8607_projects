@@ -7,8 +7,7 @@ __pycache__/
 # Données & sorties
 # data/
 # runs/
-artifacts/
-.gitattributes
+# artifacts/
 
 # Checkpoints de modèles
 artifacts/*.ckpt
