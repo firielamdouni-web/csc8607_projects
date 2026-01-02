@@ -217,11 +217,11 @@ La forme du batch train (64, 400) correspond exactement à (batch_size, seq_len)
 ### 2.1 Baselines
 
 **M0.**
+fichier `calculate_baselines.py`
 - **Classe majoritaire** — Métrique : Accuracy → score = 0.0530 (5.30%)
 Classe : 10 (rec.sport.hockey), Fréquence : 799/15076 exemples 
 - **Prédiction aléatoire uniforme** — Métrique : Accuracy → score = 0.0499 ± 0.0015 (4.99%)
 Théorique : 1/20 = 0.0500 (5.00%)
-
 
 _Commentez en 2 lignes ce que ces chiffres impliquent._
 
@@ -304,6 +304,8 @@ Gradients non nuls :  Confirmé (backward fonctionne correctement)
 
 **M2.** Donnez la **loss initiale** observée et dites si elle est cohérente. Indiquez la forme du batch et la forme de sortie du modèle.
 
+fichier `check_initial_loss.py`
+
 La loss initiale observée (3.0014 sur un batch de 64 exemples) est parfaitement cohérente avec la valeur théorique attendue -log(1/20) ≈ 2.9957 pour un modèle non entraîné avec poids aléatoires. L'écart relatif de +0.19% est négligeable et confirme l'initialisation correcte du modèle (logits centrés autour de zéro, distribution softmax quasi-uniforme). Les statistiques des logits (moyenne: -0.0028, écart-type: 0.0531, range: [-0.15, +0.22]) et la norme des gradients (totale: 0.6482, moyenne: 0.0499) confirment l'absence de vanishing/exploding gradients, garantissant une convergence stable dès les premières itérations.
 
 Formes du batch et de sortie :
@@ -339,6 +341,8 @@ Vérifications : indices valides [0, 49917] < vocab_size 50002 , labels [0, 19] 
 
 
 **M3.** Donnez la **taille du sous-ensemble**, les **hyperparamètres** du modèle utilisés, et la **courbe train/loss** (capture). Expliquez ce qui prouve l’overfit.
+
+fichier `overfit_small.py`
 
 ![alt text](images/M3.png)
 ![alt text](images/M33.png)
@@ -527,7 +531,7 @@ Observé : La courbe e=200 (rose) atteint une val_accuracy finale légèrement s
 
 ## 8) Itération supplémentaire (si temps)
 
-fichier crée iteration_supplementaire.py
+fichier `crée iteration_supplementaire.py`
 
 - **Changement(s)** : `_____` (resserrage de grille, nouvelle valeur d’un hyperparamètre, etc.)
 
