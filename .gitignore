@@ -9,11 +9,6 @@ __pycache__/
 # runs/
 # artifacts/
 
-# Checkpoints de modèles
-artifacts/*.ckpt
-artifacts/*.pth
-artifacts/*.pt
-
 # OS / IDE
 .DS_Store
 .vscode/
